@@ -37,7 +37,7 @@ completed_var = tk.BooleanVar() # Checkbox state
 completed_checkbox = tk.Checkbutton(root,text="Completed",variable=completed_var)
 completed_checkbox.grid(row=4,column=0,padx=10,pady=10,sticky="w")
 
-# Handles what happens on button click
+# Handles what happens on button click and updates Treeview after saving
 def save_expense():
     # Get data from fields
     date = date_entry.get()
@@ -46,7 +46,7 @@ def save_expense():
     description = description_entry.get()
     completed = completed_var.get()
 
-    # Append data to the csv file
+    # Append data to the .csv file
     with open('Expenses.csv','a',newline='') as file:
         writer = csv.writer(file)
         writer.writerow([date,category,amount,description,completed])
@@ -58,9 +58,34 @@ def save_expense():
     description_entry.delete(0,tk.END)
     completed_var.set(False)
 
+    expense_list.insert('',tk.END,values=(date,category,amount,description,completed))
+
 # Create the 'Add Expense' button
 submit_button = tk.Button(root,text="Add Expense",command=save_expense)
 submit_button.grid(row=5,column=1,padx=10,pady=20)
+
+# Create a Treeview widget to show expenses
+columns = ('Date','Category','Amount','Description','Completed')
+expense_list = ttk.Treeview(root,columns=columns,show='headings')
+
+# Define the column headings
+for col in columns:
+    expense_list.heading(col,text=col)
+    expense_list.column(col,minwidth=100,width=100)
+
+expense_list.grid(row=6,column=0,columnspan=2,padx=10,pady=10) # Formatting
+
+# Function to load the expenses
+def load_expenses():
+    try:
+        with open('Expenses.csv','r') as file:
+            reader = csv.reader(file) # Set to Expenses.csv file
+            for row in reader: # Reads the specified file
+                    expense_list.insert('',tk.END,values=row)  # Inserts into the Treeview
+    except FileNotFoundError:
+        pass # If not found we do nothing (shouldn't happen)
+
+load_expenses() # Load expenses
 
 # Start the tkinter loop
 root.mainloop()
