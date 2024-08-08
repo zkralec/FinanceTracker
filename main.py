@@ -6,7 +6,7 @@ from tkinter import ttk
 # Creating window with requirements
 root = tk.Tk()
 root.title("Personal Finance Tracker")
-root.geometry("400x300")
+root.geometry("800x600")
 
 # Label and entry field for the date
 date_label = tk.Label(root,text="Date:") # Label
@@ -35,7 +35,7 @@ description_entry.grid(row=3,column=1,padx=10,pady=10)
 # Checkbox for completed
 completed_var = tk.BooleanVar() # Checkbox state
 completed_checkbox = tk.Checkbutton(root,text="Completed",variable=completed_var)
-completed_checkbox.grid(row=4,column=0,padx=10,pady=10,sticky="w")
+completed_checkbox.grid(row=4,column=1,padx=10,pady=10,sticky="n")
 
 # Handles what happens on button click and updates Treeview after saving
 def save_expense():
@@ -86,6 +86,84 @@ def load_expenses():
         pass # If not found we do nothing (shouldn't happen)
 
 load_expenses() # Load expenses
+
+# Budget labels and entry fields
+budget_label = tk.Label(root,text="Set Budget For Category:")
+budget_label.grid(row=0,column=3,padx=10,pady=10,sticky='e')
+budget_category = tk.Entry(root)
+budget_category.grid(row=0,column=4,padx=10,pady=10)
+
+budget_amount_label = tk.Label(root,text="Budget Amount:")
+budget_amount_label.grid(row=1,column=3,padx=10,pady=10,sticky='e')
+budget_amount_entry = tk.Entry(root)
+budget_amount_entry.grid(row=1,column=4,padx=10,pady=10)
+
+# Function to save the set budget
+def save_budget():
+    # Get the data from fields
+    category = budget_category.get()
+    budget = budget_amount_entry.get()
+
+    # Append data to the .csv file
+    with open('Budgets.csv','a',newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([category,budget])
+
+    # Clear entry fields after saving
+    budget_category.delete(0,tk.END)
+    budget_amount_entry.delete(0,tk.END)
+
+    # Update budget display
+    update_budgets()
+
+# Button to save the budget
+save_budget_button = tk.Button(root,text="Save Budget",command=save_budget)
+save_budget_button.grid(row=2,column=4,padx=10,pady=20)
+
+# Add the budgets to the Treeview
+budget_columns = ('Category','Budget','Spent')
+budget_list = ttk.Treeview(root,columns=budget_columns,show='headings')
+
+# Define column headings
+for col in budget_columns:
+    budget_list.heading(col,text=col)
+    budget_list.column(col,minwidth=100,width=100)
+
+# Format the Treeview
+budget_list.grid(row=3,column=3,columnspan=2,padx=10,pady=10)
+
+# Function to update the budget Treeview
+def update_budgets():
+    # Clear Treeview
+    for item in budget_list.get_children():
+        budget_list.delete(item)
+
+    # Load from the .csv file
+    try:
+        with open('Budgets.csv','r') as file:
+            reader = csv.reader(file) # Set to Budgets.csv file
+            for row in reader: # Reads the specified file
+                category,budget = row # Get category and budget
+                spent = calculate_spent(category) # Call calculate_spent for calculations
+                budget_list.insert('',tk.END,values=(category,budget,spent)) # Insert values
+    except FileNotFoundError:
+        pass # If not found we do nothing (shouldn't happen)
+
+# Function to calculate what has been spent
+def calculate_spent(category):
+    total_spent = 0
+    try:
+        with open('Expenses.csv','r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                if row[1] == category: # If category matches
+                    total_spent += float(row[2]) # Add amount
+    except FileNotFoundError:
+        pass
+    return total_spent
+
+# Load budgets on start
+update_budgets()
 
 # Start the tkinter loop
 root.mainloop()
