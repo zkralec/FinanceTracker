@@ -1,24 +1,58 @@
 import tkinter as tk
 import csv
+import matplotlib.pyplot as plt
 
 from tkinter import ttk
 from tkinter import messagebox
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-# Creating window with requirements
+# Create the main window
 root = tk.Tk()
 root.title("Personal Finance Tracker")
 
-# Title
-title = tk.Label(root, text="Personal Finance Tracker", font=("Arial", 16, "bold"))
+# Configure the root window to allow expansion
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
+
+# Create a scrollable frame
+scrollable_frame = tk.Frame(root)
+scrollable_frame.grid(row=0, column=0, sticky="nsew")
+
+# Create a canvas widget and a scrollbar
+canvas = tk.Canvas(scrollable_frame)
+scrollbar = tk.Scrollbar(scrollable_frame, orient="vertical", command=canvas.yview)
+scrollable_content = tk.Frame(canvas)
+
+# Configure the scrollable content and canvas to expand
+scrollable_content.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+canvas.create_window((0, 0), window=scrollable_content, anchor='nw')
+canvas.configure(yscrollcommand=scrollbar.set)
+
+# Grid layout for canvas and scrollbar
+canvas.grid(row=0, column=0, sticky="nsew")
+scrollbar.grid(row=0, column=1, sticky="ns")
+
+# Ensure the scrollable frame and its contents expand to fill the window
+scrollable_frame.grid_rowconfigure(0, weight=1)
+scrollable_frame.grid_columnconfigure(0, weight=1)
+scrollable_content.grid_columnconfigure(0, weight=1)
+scrollable_content.grid_columnconfigure(1, weight=1)
+
+# Title label
+title = tk.Label(scrollable_content, text="Personal Finance Tracker", font=("Arial", 16, "bold"))
 title.grid(row=0, column=0, columnspan=2, pady=10)
 
-# Frames
-expense_frame = tk.Frame(root)
-budget_frame = tk.Frame(root)
+# Frames for expenses and budgets
+expense_frame = tk.Frame(scrollable_content)
+budget_frame = tk.Frame(scrollable_content)
 
-# Place the frames side by side
-expense_frame.grid(row=1, column=0, padx=20, pady=10, sticky="n")
-budget_frame.grid(row=1, column=1, padx=20, pady=10, sticky="n")
+# Place frames side by side
+expense_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
+budget_frame.grid(row=1, column=1, padx=20, pady=10, sticky="nsew")
+
+# Ensure the frames expand properly within their columns
+scrollable_content.grid_columnconfigure(0, weight=1)
+scrollable_content.grid_columnconfigure(1, weight=1)
 
 # Label and entry field for the date
 date_label = tk.Label(expense_frame,text="Date:") # Label
@@ -197,8 +231,44 @@ def reset_data():
         messagebox.showinfo("Data Reset","All data has been reset.")
 
 # Button to call reset_data
-reset_button = tk.Button(root,text="Reset All Data",command=reset_data)
+reset_button = tk.Button(scrollable_content,text="Reset All Data",command=reset_data)
 reset_button.grid(row=2,column=0,padx=10,pady=20)
 
+# Function for a pie chart for expenses
+def show_spending_chart():
+    categories = []
+    amounts = []
+
+    with open('Expenses.csv','r') as file:
+        reader = csv.reader(file)
+        for row in reader: # Goes through rows in file
+            category = row[1] # Category is the first part
+            amount = float(row[2]) # Amount is second part
+            if category in categories: # For each item in a category
+                index = categories.index(category) # Set index
+                amounts[index] += amount # Add to total amount
+            else:
+                categories.append(category) 
+                amounts.append(amount)
+    
+    # Create the pie chart
+    fig,ax = plt.subplots()
+    ax.pie(amounts,labels=categories,autopct='%1.1f%%',startangle=90)
+    ax.axis('equal')
+
+    # Clear chart if any
+    for widget in scrollable_content.winfo_children():
+        if isinstance(widget, FigureCanvasTkAgg):
+            widget.get_tk_widget().destroy()
+
+    # Put chart in Tkinter
+    canvas = FigureCanvasTkAgg(fig,master=scrollable_content)
+    canvas.draw()
+    canvas.get_tk_widget().grid(row=3,column=0,columnspan=2,padx=20,pady=20)
+
+# Button to show chart
+chart_show = tk.Button(scrollable_content,text="Show Spending Chart",command=show_spending_chart)
+chart_show.grid(row=2,column=0,columnspan=2,pady=10)
+
 # Start the tkinter loop
-root.mainloop()
+scrollable_content.mainloop()
