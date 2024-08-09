@@ -11,48 +11,50 @@ root = tk.Tk()
 root.title("Personal Finance Tracker")
 
 # Configure the root window to allow expansion
-root.grid_rowconfigure(0, weight=1)
-root.grid_columnconfigure(0, weight=1)
+root.grid_rowconfigure(0,weight=1)
+root.grid_columnconfigure(0,weight=1)
 
 # Create a scrollable frame
 scrollable_frame = tk.Frame(root)
-scrollable_frame.grid(row=0, column=0, sticky="nsew")
+scrollable_frame.grid(row=0,column=0,sticky="nsew")
 
 # Create a canvas widget and a scrollbar
 canvas = tk.Canvas(scrollable_frame)
-scrollbar = tk.Scrollbar(scrollable_frame, orient="vertical", command=canvas.yview)
+scrollbar = tk.Scrollbar(scrollable_frame,orient="vertical",command=canvas.yview)
 scrollable_content = tk.Frame(canvas)
 
 # Configure the scrollable content and canvas to expand
-scrollable_content.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-canvas.create_window((0, 0), window=scrollable_content, anchor='nw')
+scrollable_content.bind("<Configure>",lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+canvas.create_window((0,0),window=scrollable_content,anchor='nw')
 canvas.configure(yscrollcommand=scrollbar.set)
 
 # Grid layout for canvas and scrollbar
-canvas.grid(row=0, column=0, sticky="nsew")
-scrollbar.grid(row=0, column=1, sticky="ns")
+canvas.grid(row=0,column=0,sticky="nsew")
+scrollbar.grid(row=0,column=1,sticky="ns")
 
 # Ensure the scrollable frame and its contents expand to fill the window
-scrollable_frame.grid_rowconfigure(0, weight=1)
-scrollable_frame.grid_columnconfigure(0, weight=1)
-scrollable_content.grid_columnconfigure(0, weight=1)
-scrollable_content.grid_columnconfigure(1, weight=1)
+scrollable_frame.grid_rowconfigure(0,weight=1)
+scrollable_frame.grid_columnconfigure(0,weight=1)
+scrollable_content.grid_columnconfigure(0,weight=1)
+scrollable_content.grid_columnconfigure(1,weight=1)
 
 # Title label
-title = tk.Label(scrollable_content, text="Personal Finance Tracker", font=("Arial", 16, "bold"))
-title.grid(row=0, column=0, columnspan=2, pady=10)
+title = tk.Label(scrollable_content,text="Personal Finance Tracker",font=("Arial",16,"bold"))
+title.grid(row=0,column=0,columnspan=2,pady=10)
 
 # Frames for expenses and budgets
 expense_frame = tk.Frame(scrollable_content)
 budget_frame = tk.Frame(scrollable_content)
+income_frame = tk.Frame(scrollable_content)
 
 # Place frames side by side
-expense_frame.grid(row=1, column=0, padx=20, pady=10, sticky="nsew")
-budget_frame.grid(row=1, column=1, padx=20, pady=10, sticky="nsew")
+expense_frame.grid(row=1,column=0,padx=20,pady=10,sticky="nsew")
+budget_frame.grid(row=1,column=1,padx=20,pady=10,sticky="nsew")
+income_frame.grid(row=1,column=2,padx=20,pady=20,sticky='nsew')
 
 # Ensure the frames expand properly within their columns
-scrollable_content.grid_columnconfigure(0, weight=1)
-scrollable_content.grid_columnconfigure(1, weight=1)
+scrollable_content.grid_columnconfigure(0,weight=1)
+scrollable_content.grid_columnconfigure(1,weight=1)
 
 # Label and entry field for the date
 date_label = tk.Label(expense_frame,text="Date:") # Label
@@ -78,13 +80,6 @@ description_label.grid(row=3,column=0,padx=10,pady=10,sticky="e")
 description_entry = tk.Entry(expense_frame)
 description_entry.grid(row=3,column=1,padx=10,pady=10)
 
-# Checkbox for completed
-completed_label = tk.Label(expense_frame, text="Completed:")
-completed_label.grid(row=4, column=0, padx=10, pady=5, sticky="e")
-completed_var = tk.BooleanVar()
-completed_check = tk.Checkbutton(expense_frame, variable=completed_var)
-completed_check.grid(row=4, column=1, padx=10, pady=5)
-
 # Handles what happens on button click and updates Treeview after saving
 def save_expense():
     # Get data from fields
@@ -92,28 +87,26 @@ def save_expense():
     category = category_entry.get()
     amount = amount_entry.get()
     description = description_entry.get()
-    completed = completed_var.get()
 
     # Append data to the .csv file
     with open('Expenses.csv','a',newline='') as file:
         writer = csv.writer(file)
-        writer.writerow([date,category,amount,description,completed])
+        writer.writerow([date,category,amount,description])
 
     # Clear the fields after writing
     date_entry.delete(0,tk.END)
     category_entry.delete(0,tk.END)
     amount_entry.delete(0,tk.END)
     description_entry.delete(0,tk.END)
-    completed_var.set(False)
 
-    expense_list.insert('',tk.END,values=(date,category,amount,description,completed))
+    expense_list.insert('',tk.END,values=(date,category,amount,description))
 
 # Create the 'Add Expense' button
 submit_button = tk.Button(expense_frame,text="Add Expense",command=save_expense)
 submit_button.grid(row=5,column=1,padx=10,pady=20)
 
 # Create a Treeview widget to show expenses
-columns = ('Date','Category','Amount','Description','Completed')
+columns = ('Date','Category','Amount','Description')
 expense_list = ttk.Treeview(expense_frame,columns=columns,show='headings')
 
 # Define the column headings
@@ -231,8 +224,8 @@ def reset_data():
         messagebox.showinfo("Data Reset","All data has been reset.")
 
 # Button to call reset_data
-reset_button = tk.Button(scrollable_content,text="Reset All Data",command=reset_data)
-reset_button.grid(row=2,column=0,padx=10,pady=20)
+reset_button = tk.Button(income_frame,text="Reset All Data",command=reset_data)
+reset_button.grid(row=0,column=0,padx=10,pady=10,sticky='e')
 
 # Function for a pie chart for expenses
 def show_spending_chart():
@@ -252,7 +245,7 @@ def show_spending_chart():
                 amounts.append(amount)
     
     # Create the pie chart
-    fig,ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(4, 3))
     ax.pie(amounts,labels=categories,autopct='%1.1f%%',startangle=90)
     ax.axis('equal')
 
@@ -262,13 +255,13 @@ def show_spending_chart():
             widget.get_tk_widget().destroy()
 
     # Put chart in Tkinter
-    canvas = FigureCanvasTkAgg(fig,master=scrollable_content)
+    canvas = FigureCanvasTkAgg(fig,master=income_frame)
     canvas.draw()
-    canvas.get_tk_widget().grid(row=3,column=0,columnspan=2,padx=20,pady=20)
+    canvas.get_tk_widget().grid(row=2,column=0,columnspan=2,padx=20,pady=20)
 
 # Button to show chart
-chart_show = tk.Button(scrollable_content,text="Show Spending Chart",command=show_spending_chart)
-chart_show.grid(row=2,column=0,columnspan=2,pady=10)
+chart_show = tk.Button(income_frame,text="Show Spending Chart",command=show_spending_chart)
+chart_show.grid(row=1,column=0,columnspan=2,pady=10)
 
 # Start the tkinter loop
 scrollable_content.mainloop()
