@@ -2,11 +2,11 @@ import tkinter as tk
 import csv
 
 from tkinter import ttk
+from tkinter import messagebox
 
 # Creating window with requirements
 root = tk.Tk()
 root.title("Personal Finance Tracker")
-root.geometry("800x600")
 
 # Label and entry field for the date
 date_label = tk.Label(root,text="Date:") # Label
@@ -164,6 +164,27 @@ def calculate_spent(category):
 
 # Load budgets on start
 update_budgets()
+
+# Function that will reset all data
+def reset_data():
+    # Prompt user with text
+    answer = messagebox.askyesno("Reset Data","Are you sure you want to reset all data? This action cannot be undone.")
+    # If user proceeds
+    if answer:
+        with open('Expenses.csv','w',newline='') as file:
+            writer = csv.writer(file)
+        with open('Budgets.csv','w',newline='') as file:
+            writer = csv.writer(file)
+        for item in expense_list.get_children():
+            expense_list.delete(item)
+        for item in budget_list.get_children():
+            budget_list.delete(item)
+
+        messagebox.showinfo("Data Reset","All data has been reset.")
+
+# Button to call reset_data
+reset_button = tk.Button(root,text="Reset All Data",command=reset_data)
+reset_button.grid(row=0,column=6,padx=10,pady=20)
 
 # Start the tkinter loop
 root.mainloop()
