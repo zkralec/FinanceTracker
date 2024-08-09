@@ -8,34 +8,48 @@ from tkinter import messagebox
 root = tk.Tk()
 root.title("Personal Finance Tracker")
 
+# Title
+title = tk.Label(root, text="Personal Finance Tracker", font=("Arial", 16, "bold"))
+title.grid(row=0, column=0, columnspan=2, pady=10)
+
+# Frames
+expense_frame = tk.Frame(root)
+budget_frame = tk.Frame(root)
+
+# Place the frames side by side
+expense_frame.grid(row=1, column=0, padx=20, pady=10, sticky="n")
+budget_frame.grid(row=1, column=1, padx=20, pady=10, sticky="n")
+
 # Label and entry field for the date
-date_label = tk.Label(root,text="Date:") # Label
+date_label = tk.Label(expense_frame,text="Date:") # Label
 date_label.grid(row=0,column=0,padx=10,pady=10,sticky="e") # Formatting (position,position,padding,padding,east side)
-date_entry = tk.Entry(root) # Entry
+date_entry = tk.Entry(expense_frame) # Entry
 date_entry.grid(row=0,column=1,padx=10,pady=10) # Formatting 
 
 # Label and entry field for the category
-category_label = tk.Label(root,text="Category:")
+category_label = tk.Label(expense_frame,text="Category:")
 category_label.grid(row=1,column=0,padx=10,pady=10,sticky="e")
-category_entry = tk.Entry(root)
+category_entry = tk.Entry(expense_frame)
 category_entry.grid(row=1,column=1,padx=10,pady=10)
 
 # Label and entry field for the amount
-amount_label = tk.Label(root,text="Amount:")
+amount_label = tk.Label(expense_frame,text="Amount:")
 amount_label.grid(row=2,column=0,padx=10,pady=10,sticky="e")
-amount_entry = tk.Entry(root)
+amount_entry = tk.Entry(expense_frame)
 amount_entry.grid(row=2,column=1,padx=10,pady=10)
 
 # Label and entry field for the description
-description_label = tk.Label(root,text="Description:")
+description_label = tk.Label(expense_frame,text="Description:")
 description_label.grid(row=3,column=0,padx=10,pady=10,sticky="e")
-description_entry = tk.Entry(root)
+description_entry = tk.Entry(expense_frame)
 description_entry.grid(row=3,column=1,padx=10,pady=10)
 
 # Checkbox for completed
-completed_var = tk.BooleanVar() # Checkbox state
-completed_checkbox = tk.Checkbutton(root,text="Completed",variable=completed_var)
-completed_checkbox.grid(row=4,column=1,padx=10,pady=10,sticky="n")
+completed_label = tk.Label(expense_frame, text="Completed:")
+completed_label.grid(row=4, column=0, padx=10, pady=5, sticky="e")
+completed_var = tk.BooleanVar()
+completed_check = tk.Checkbutton(expense_frame, variable=completed_var)
+completed_check.grid(row=4, column=1, padx=10, pady=5)
 
 # Handles what happens on button click and updates Treeview after saving
 def save_expense():
@@ -61,12 +75,12 @@ def save_expense():
     expense_list.insert('',tk.END,values=(date,category,amount,description,completed))
 
 # Create the 'Add Expense' button
-submit_button = tk.Button(root,text="Add Expense",command=save_expense)
+submit_button = tk.Button(expense_frame,text="Add Expense",command=save_expense)
 submit_button.grid(row=5,column=1,padx=10,pady=20)
 
 # Create a Treeview widget to show expenses
 columns = ('Date','Category','Amount','Description','Completed')
-expense_list = ttk.Treeview(root,columns=columns,show='headings')
+expense_list = ttk.Treeview(expense_frame,columns=columns,show='headings')
 
 # Define the column headings
 for col in columns:
@@ -88,15 +102,15 @@ def load_expenses():
 load_expenses() # Load expenses
 
 # Budget labels and entry fields
-budget_label = tk.Label(root,text="Set Budget For Category:")
-budget_label.grid(row=0,column=3,padx=10,pady=10,sticky='e')
-budget_category = tk.Entry(root)
-budget_category.grid(row=0,column=4,padx=10,pady=10)
+budget_label = tk.Label(budget_frame,text="Set Budget For Category:")
+budget_label.grid(row=0,column=0,padx=10,pady=10,sticky='e')
+budget_category = tk.Entry(budget_frame)
+budget_category.grid(row=0,column=1,padx=10,pady=10)
 
-budget_amount_label = tk.Label(root,text="Budget Amount:")
-budget_amount_label.grid(row=1,column=3,padx=10,pady=10,sticky='e')
-budget_amount_entry = tk.Entry(root)
-budget_amount_entry.grid(row=1,column=4,padx=10,pady=10)
+budget_amount_label = tk.Label(budget_frame,text="Budget Amount:")
+budget_amount_label.grid(row=1,column=0,padx=10,pady=10,sticky='e')
+budget_amount_entry = tk.Entry(budget_frame)
+budget_amount_entry.grid(row=1,column=1,padx=10,pady=10)
 
 # Function to save the set budget
 def save_budget():
@@ -117,12 +131,12 @@ def save_budget():
     update_budgets()
 
 # Button to save the budget
-save_budget_button = tk.Button(root,text="Save Budget",command=save_budget)
-save_budget_button.grid(row=2,column=4,padx=10,pady=20)
+save_budget_button = tk.Button(budget_frame,text="Save Budget",command=save_budget)
+save_budget_button.grid(row=2,column=1,padx=10,pady=20)
 
 # Add the budgets to the Treeview
 budget_columns = ('Category','Budget','Spent')
-budget_list = ttk.Treeview(root,columns=budget_columns,show='headings')
+budget_list = ttk.Treeview(budget_frame,columns=budget_columns,show='headings')
 
 # Define column headings
 for col in budget_columns:
@@ -130,7 +144,7 @@ for col in budget_columns:
     budget_list.column(col,minwidth=100,width=100)
 
 # Format the Treeview
-budget_list.grid(row=3,column=3,columnspan=2,padx=10,pady=10)
+budget_list.grid(row=3,column=0,columnspan=2,padx=10,pady=10)
 
 # Function to update the budget Treeview
 def update_budgets():
@@ -184,7 +198,7 @@ def reset_data():
 
 # Button to call reset_data
 reset_button = tk.Button(root,text="Reset All Data",command=reset_data)
-reset_button.grid(row=0,column=6,padx=10,pady=20)
+reset_button.grid(row=2,column=0,padx=10,pady=20)
 
 # Start the tkinter loop
 root.mainloop()
