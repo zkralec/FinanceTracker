@@ -38,23 +38,47 @@ scrollable_frame.grid_columnconfigure(0,weight=1)
 scrollable_content.grid_columnconfigure(0,weight=1)
 scrollable_content.grid_columnconfigure(1,weight=1)
 
-# Title label
-title = tk.Label(scrollable_content,text="Personal Finance Tracker",font=("Arial",16,"bold"))
-title.grid(row=0,column=0,columnspan=2,pady=10)
-
 # Frames for expenses and budgets
 expense_frame = tk.Frame(scrollable_content)
 budget_frame = tk.Frame(scrollable_content)
 income_frame = tk.Frame(scrollable_content)
 
-# Place frames side by side
-expense_frame.grid(row=1,column=0,padx=20,pady=10,sticky="nsew")
-budget_frame.grid(row=1,column=1,padx=20,pady=10,sticky="nsew")
-income_frame.grid(row=1,column=2,padx=20,pady=20,sticky='nsew')
+# Function that will reset all data
+def reset_data():
+    # Prompt user with text
+    answer = messagebox.askyesno("Reset Data","Are you sure you want to reset all data? This action cannot be undone.")
+    # If user proceeds
+    if answer:
+        with open('Expenses.csv','w',newline='') as file:
+            writer = csv.writer(file)
+        with open('Budgets.csv','w',newline='') as file:
+            writer = csv.writer(file)
+        for item in expense_list.get_children():
+            expense_list.delete(item)
+        for item in budget_list.get_children():
+            budget_list.delete(item)
+
+        messagebox.showinfo("Data Reset","All data has been reset.")
+
+# Button to call reset_data
+reset_button = tk.Button(income_frame,text="Reset All Data",command=reset_data)
+
+# Reset all data button top left
+reset_button.grid(row=1, column=4, sticky="w")
+
+# Expense section middle left
+expense_frame.grid(row=1, column=0, sticky="nw")
+
+# Budget section middle
+budget_frame.grid(row=1, column=1, sticky="nw")
+
+# Income section middle right
+income_frame.grid(row=1, column=2, sticky="nw")
 
 # Ensure the frames expand properly within their columns
-scrollable_content.grid_columnconfigure(0,weight=1)
-scrollable_content.grid_columnconfigure(1,weight=1)
+scrollable_content.grid_columnconfigure(0, weight=1)
+scrollable_content.grid_columnconfigure(1, weight=1)
+scrollable_content.grid_columnconfigure(2, weight=1)
 
 # Label and entry field for the date
 date_label = tk.Label(expense_frame,text="Date:") # Label
@@ -206,62 +230,74 @@ def calculate_spent(category):
 # Load budgets on start
 update_budgets()
 
-# Function that will reset all data
-def reset_data():
-    # Prompt user with text
-    answer = messagebox.askyesno("Reset Data","Are you sure you want to reset all data? This action cannot be undone.")
-    # If user proceeds
-    if answer:
-        with open('Expenses.csv','w',newline='') as file:
-            writer = csv.writer(file)
-        with open('Budgets.csv','w',newline='') as file:
-            writer = csv.writer(file)
-        for item in expense_list.get_children():
-            expense_list.delete(item)
-        for item in budget_list.get_children():
-            budget_list.delete(item)
+# Label and field for income
+income_label = tk.Label(income_frame, text="Enter Annual Income:")
+income_label.grid(row=1, column=0, padx=10, pady=10, sticky='e')
+income_entry = tk.Entry(income_frame)
+income_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        messagebox.showinfo("Data Reset","All data has been reset.")
+# Function to save income
+def save_income():
+    income = income_entry.get()
 
-# Button to call reset_data
-reset_button = tk.Button(income_frame,text="Reset All Data",command=reset_data)
-reset_button.grid(row=0,column=0,padx=10,pady=10,sticky='e')
+    with open('Income.csv', 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([income])
 
-# Function for a pie chart for expenses
-def show_spending_chart():
-    categories = []
-    amounts = []
+    income_entry.delete(0, tk.END)
+    update_income()
 
-    with open('Expenses.csv','r') as file:
-        reader = csv.reader(file)
-        for row in reader: # Goes through rows in file
-            category = row[1] # Category is the first part
-            amount = float(row[2]) # Amount is second part
-            if category in categories: # For each item in a category
-                index = categories.index(category) # Set index
-                amounts[index] += amount # Add to total amount
-            else:
-                categories.append(category) 
-                amounts.append(amount)
-    
-    # Create the pie chart
-    fig, ax = plt.subplots(figsize=(4, 3))
-    ax.pie(amounts,labels=categories,autopct='%1.1f%%',startangle=90)
-    ax.axis('equal')
+# Add income button
+income_button = tk.Button(income_frame, text="Add Income", command=save_income)
+income_button.grid(row=2, column=1, padx=10, pady=10)
 
-    # Clear chart if any
-    for widget in scrollable_content.winfo_children():
-        if isinstance(widget, FigureCanvasTkAgg):
-            widget.get_tk_widget().destroy()
+# Function to load and display income
+def update_income():
+    total_income = 0
 
-    # Put chart in Tkinter
-    canvas = FigureCanvasTkAgg(fig,master=income_frame)
-    canvas.draw()
-    canvas.get_tk_widget().grid(row=2,column=0,columnspan=2,padx=20,pady=20)
+    try:
+        with open('Income.csv', 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                total_income += float(row[0])
+    except FileNotFoundError:
+        pass
 
-# Button to show chart
-chart_show = tk.Button(income_frame,text="Show Spending Chart",command=show_spending_chart)
-chart_show.grid(row=1,column=0,columnspan=2,pady=10)
+    income_display_label.config(text=f"Total Income This Year: ${total_income:.2f}")
+
+# Label to display income
+income_display_label = tk.Label(income_frame, text="Total Income This Year: $0.00")
+income_display_label.grid(row=3, column=1, columnspan=2, pady=10)
+
+update_income()
+
+# Function to calculate budget based on income
+def suggest_budget():
+    total_income = 0
+
+    try:
+        with open('Income.csv', 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                total_income += float(row[0])
+
+            # Typical 50/30/20 rule
+            needs_budget = total_income * 0.5
+            wants_budget = total_income * 0.3
+            savings_budget = total_income * 0.2
+
+            messagebox.showinfo("Suggested Budget",
+                                f"Based on your income of ${total_income:.2f}:\n"
+                                f"Needs (50%): ${needs_budget:.2f}\n"
+                                f"Wants (30%): ${wants_budget:.2f}\n"
+                                f"Savings (20%): ${savings_budget:.2f}\n")
+            
+    except FileNotFoundError:
+        messagebox.showerror("Error", "No income data found. Please enter your income first.")
+
+# Suggest budget button
+suggest_budget_button = tk.Button(income_frame, text="Suggest Budget", command=suggest_budget)
+suggest_budget_button.grid(row=4, column=1, pady=10, padx=10)
 
 # Start the tkinter loop
 scrollable_content.mainloop()
