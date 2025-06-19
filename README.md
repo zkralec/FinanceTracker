@@ -1,2 +1,2 @@
 # FinanceTracker
-Created to enhance my Python skills on my own free time. The purpose of this program is to help users keep track of their monthly income and spending. This will make it easy for people to organize where money is going vs. where it should go.
+A Python desktop app for managing income and creating custom budgets. Users can input their salary, generate suggested budgets, and track purchases using dynamic tables. I built this to strengthen my skills in Tkinter and Matplotlib while learning how to structure a real-world Python project.
